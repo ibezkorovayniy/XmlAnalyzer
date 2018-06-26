@@ -18,7 +18,7 @@ public class XmlAnalyzer {
     private static final String CHARSET_NAME = "utf8";
     private static final String DEFAULT_ID = "make-everything-ok-button";
     private static final String CSS_QUERY = ".btn";
-    private static Logger LOGGER = LoggerFactory.getLogger(XmlAnalyzer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(XmlAnalyzer.class);
 
     public static void main(String[] args) {
 
