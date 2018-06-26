@@ -15,77 +15,78 @@ import java.util.stream.Collectors;
 
 public class XmlAnalyzer {
 
-    private static String CHARSET_NAME = "utf8";
+    private static final String CHARSET_NAME = "utf8";
+    private static final String DEFAULT_ID = "make-everything-ok-button";
+    private static final String CSS_QUERY = ".btn";
     private static Logger LOGGER = LoggerFactory.getLogger(XmlAnalyzer.class);
 
     public static void main(String[] args) {
 
         String originalHtmlPath = args[0];
         String diffCaseHtmlPath = args[1];
-        //String originalElementId = args[2];
-        String originalElementId = "make-everything-ok-button";
+        String originalElementId;
 
+        if (args.length == 2) {
+            originalElementId = DEFAULT_ID;
+        } else {
+            originalElementId = args[2];
+        }
 
-        String  cssQuery = ".btn";
-
-        //Getting original element from the html file
+        // Getting original element from the html file
 
         Optional<Element> buttonOpt = findElementById(new File(originalHtmlPath), originalElementId);
 
+        if (!buttonOpt.isPresent()) {
+            throw new RuntimeException("No such element");
+        }
+        Element originalElement = buttonOpt.get();
 
-        Optional<String> stringifiedAttributesOpt = buttonOpt.map(button ->
-                button.attributes().asList().stream()
-                        .map(attr -> attr.getKey() + " = " + attr.getValue())
-                        .collect(Collectors.joining(", "))
-        );
+        List<String> originalElementAttributes = originalElement
+                .attributes()
+                .asList()
+                .stream()
+                .map(attr -> attr.getKey() + " = " + attr.getValue())
+                .collect(Collectors.toList());
 
-        //logging all element attributes
+        // Logging all element attributes
 
-        stringifiedAttributesOpt.ifPresent(attrs -> LOGGER.info("Original element attributes: [{}]", attrs));
+        originalElementAttributes.forEach(attrs -> LOGGER.info("Original element attributes: [{}]", attrs));
 
+        // Creating set of strings with values of attributes
 
-        //Creating set of strings with values of attributes
+        Set<String> originalAttributes = new HashSet<>();
 
-        Set<String> attributesSet = new HashSet<>();
-
-        buttonOpt.ifPresent(button -> attributesSet
+        buttonOpt.ifPresent(button -> originalAttributes
                 .addAll(button.attributes().asList().stream()
                         .map(Attribute::getValue)
                         .collect(Collectors.toSet())));
 
+        Optional<Elements> elementsOpt = findElementsByQuery(new File(diffCaseHtmlPath), CSS_QUERY);
 
-
-
-
-        Optional<Elements> elementsOpt = findElementsByQuery(new File(diffCaseHtmlPath), cssQuery);
-
-        if(!elementsOpt.isPresent()) {
+        if (!elementsOpt.isPresent()) {
             throw new RuntimeException("No such elements");
         }
         Elements targetElements = elementsOpt.get();
 
+        List<ElementWrapper> elementWrappers = new ArrayList<>();
 
-
-        List<ElementWrapper> elemWrappers = new ArrayList<>();
-
-        targetElements.forEach(element -> elemWrappers
+        targetElements.forEach(element -> elementWrappers
                 .add(new ElementWrapper(element, element.attributes()
                         .asList()
                         .stream()
                         .map(Attribute::getValue)
                         .collect(Collectors.toSet()))));
 
-
         int max = 0;
         ElementWrapper targetElement = null;
 
-        for (ElementWrapper elemWrapper : elemWrappers) {
+        for (ElementWrapper elementWrapper : elementWrappers) {
 
-            Set<String> intersection = new HashSet<>(elemWrapper.getAttributeSet());
-            intersection.retainAll(attributesSet);
-            if(max < intersection.size()) {
+            Set<String> intersection = new HashSet<>(elementWrapper.getAttributeSet());
+            intersection.retainAll(originalAttributes);
+            if (max < intersection.size()) {
                 max = intersection.size();
-                targetElement =elemWrapper;
+                targetElement = elementWrapper;
             }
         }
 
@@ -97,9 +98,6 @@ public class XmlAnalyzer {
         }
 
     }
-
-
-
 
     private static Optional<Element> findElementById(File originalHtml, String originalElementId) {
         try {
@@ -131,9 +129,7 @@ public class XmlAnalyzer {
         }
     }
 
-
     static class ElementWrapper {
-
 
         private Element element;
 
@@ -143,8 +139,6 @@ public class XmlAnalyzer {
             this.element = element;
             this.attributeSet = attributeSet;
         }
-
-
 
         public Element getElement() {
             return element;
