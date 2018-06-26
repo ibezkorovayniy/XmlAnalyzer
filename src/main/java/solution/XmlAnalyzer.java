@@ -33,7 +33,6 @@ public class XmlAnalyzer {
         }
 
         // Getting original element from the html file
-
         Optional<Element> buttonOpt = findElementById(new File(originalHtmlPath), originalElementId);
 
         if (!buttonOpt.isPresent()) {
@@ -49,11 +48,10 @@ public class XmlAnalyzer {
                 .collect(Collectors.toList());
 
         // Logging all element attributes
-
-        originalElementAttributes.forEach(attrs -> LOGGER.info("Original element attributes: [{}]", attrs));
+        System.out.println("Original element attributes: ");
+        originalElementAttributes.forEach(System.out::println);
 
         // Creating set of strings with values of attributes
-
         Set<String> originalAttributes = new HashSet<>();
 
         buttonOpt.ifPresent(button -> originalAttributes
@@ -81,7 +79,6 @@ public class XmlAnalyzer {
         ElementWrapper targetElement = null;
 
         for (ElementWrapper elementWrapper : elementWrappers) {
-
             Set<String> intersection = new HashSet<>(elementWrapper.getAttributeSet());
             intersection.retainAll(originalAttributes);
             if (max < intersection.size()) {
@@ -94,7 +91,8 @@ public class XmlAnalyzer {
 
         if (targetElement != null) {
             System.out.println("Target element attributes :" + targetElement.getAttributeSet());
-            System.out.println("\nPath to target element: " + "html > body > div.wrapper > div." + targetElement.getElement().cssSelector());
+            System.out.println("\nPath to target element: " + "html > body > div.wrapper > div."
+                    + targetElement.getElement().cssSelector());
         }
 
     }
